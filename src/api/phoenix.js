@@ -77,6 +77,22 @@ export function coachSession({ mode, messages, strategySchema, traderProfile }) 
   })
 }
 
+export function fetchIASGRankings(month, year, credentials) {
+  return request('/iasg/rankings', {
+    method: 'POST',
+    body: { month, year, ...(credentials || {}) },
+    timeout: 60000,
+  })
+}
+
+export function testIASGCredentials(email, password) {
+  return request('/iasg/test-credentials', {
+    method: 'POST',
+    body: { email, password },
+    timeout: 30000,
+  })
+}
+
 export function fetchMarketOHLCV(symbol, start, end) {
   return request(`/market/ohlcv/${symbol}?start=${start}&end=${end}`)
 }

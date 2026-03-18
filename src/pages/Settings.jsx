@@ -26,6 +26,8 @@ export default function Settings() {
   const [iasgEmail, setIasgEmail] = useState(localStorage.getItem('phoenix_iasg_email') || '')
   const [iasgPassword, setIasgPassword] = useState(localStorage.getItem('phoenix_iasg_password') || '')
   const [iasgSaved, setIasgSaved] = useState(false)
+  const [iasgTestStatus, setIasgTestStatus] = useState(null)
+  const [iasgTesting, setIasgTesting] = useState(false)
 
   function saveIasgCredentials() {
     if (iasgEmail.trim()) {
@@ -48,6 +50,46 @@ export default function Settings() {
     setIasgEmail('')
     setIasgPassword('')
     setIasgSaved(false)
+    setIasgTestStatus(null)
+  }
+
+  async function testIasgCredentials() {
+    const email = iasgEmail.trim() || localStorage.getItem('phoenix_iasg_email')
+    const password = iasgPassword || localStorage.getItem('phoenix_iasg_password')
+    if (!email || !password) {
+      setIasgTestStatus({ ok: false, message: 'Enter both email and password first' })
+      return
+    }
+    setIasgTesting(true)
+    setIasgTestStatus(null)
+    try {
+      const baseUrl = localStorage.getItem('phoenix_api_url') || 'https://web-production-63a4f.up.railway.app'
+      const res = await fetch(`${baseUrl}/iasg/test-credentials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        signal: AbortSignal.timeout(30000),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setIasgTestStatus({ ok: true, message: data.message || 'Credentials verified' })
+      } else if (res.status === 401) {
+        setIasgTestStatus({ ok: false, message: 'Invalid credentials — check email and password' })
+      } else if (res.status === 404) {
+        // Endpoint not yet on backend — fall back to a simple validation check
+        setIasgTestStatus({ ok: null, message: 'Credentials saved — backend verification endpoint not yet available' })
+      } else {
+        setIasgTestStatus({ ok: false, message: `Server error (${res.status})` })
+      }
+    } catch (err) {
+      if (err.name === 'TimeoutError') {
+        setIasgTestStatus({ ok: false, message: 'Request timed out' })
+      } else {
+        setIasgTestStatus({ ok: null, message: 'Credentials saved — could not reach backend to verify' })
+      }
+    } finally {
+      setIasgTesting(false)
+    }
   }
 
   function handleProfileChange(key, value) {
@@ -172,8 +214,17 @@ export default function Settings() {
           <button className="btn-primary" onClick={saveIasgCredentials}>
             {iasgSaved ? '✓ Saved' : 'Save Credentials'}
           </button>
+          <button className="btn-primary" onClick={testIasgCredentials} disabled={iasgTesting}>
+            {iasgTesting ? 'Testing…' : 'Test Credentials'}
+          </button>
           <button className="btn-secondary" onClick={clearIasgCredentials}>Clear</button>
         </div>
+        {iasgTestStatus && (
+          <div className={`health-status ${iasgTestStatus.ok === true ? 'healthy' : iasgTestStatus.ok === false ? 'unhealthy' : ''}`}
+               style={iasgTestStatus.ok === null ? { background: 'rgba(179,142,92,0.15)', color: '#B38E5C', border: '1px solid rgba(179,142,92,0.3)' } : {}}>
+            {iasgTestStatus.message}
+          </div>
+        )}
       </section>
 
       <section className="settings-section">

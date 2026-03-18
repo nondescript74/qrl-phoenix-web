@@ -1,41 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { fetchIASGRankings } from '../api/phoenix'
 import Spinner from '../components/Spinner'
-
-// Lightweight IASG HTML parser (mirrors iOS regex parser)
-function parseIASGHTML(html) {
-  const rankings = []
-  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
-  const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi
-  const linkRegex = /<a[^>]+href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/i
-  const rows = html.match(rowRegex) || []
-
-  for (const row of rows) {
-    const cells = row.match(cellRegex) || []
-    if (cells.length < 5) continue
-
-    const stripTags = (s) => s.replace(/<[^>]*>/g, '').trim()
-    const rankText = stripTags(cells[0])
-    const rank = parseInt(rankText, 10)
-    if (isNaN(rank) || rank <= 0) continue
-
-    const groupMatch = cells[1].match(linkRegex)
-    const programMatch = cells[2].match(linkRegex)
-    const perfText = stripTags(cells[3])
-    const inceptionText = stripTags(cells[4])
-
-    rankings.push({
-      rank,
-      group_name: groupMatch ? groupMatch[2].trim() : stripTags(cells[1]),
-      group_url: groupMatch ? groupMatch[1] : '',
-      program_name: programMatch ? programMatch[2].trim() : stripTags(cells[2]),
-      program_url: programMatch ? `https://www.iasg.com${programMatch[1]}` : '',
-      performance: parseFloat(perfText) || 0,
-      inception_date: inceptionText,
-    })
-  }
-  return rankings
-}
 
 export default function IASG() {
   const navigate = useNavigate()
@@ -48,30 +14,28 @@ export default function IASG() {
     setLoading(true)
     setError(null)
     try {
-      // Try current and past months
+      const credentials = {
+        email: localStorage.getItem('phoenix_iasg_email') || undefined,
+        password: localStorage.getItem('phoenix_iasg_password') || undefined,
+      }
+
+      // Try current and past months via backend proxy (avoids CORS)
       const now = new Date()
-      let html = null
       for (let offset = 0; offset < 6; offset++) {
         const d = new Date(now.getFullYear(), now.getMonth() - offset, 1)
         const month = d.toLocaleString('en-US', { month: 'long' }).toLowerCase()
         const year = d.getFullYear()
-        const url = `https://www.iasg.com/cta-rankings/${month}-${year}`
         try {
-          // Use a CORS proxy or direct fetch
-          const res = await fetch(url)
-          if (res.ok) {
-            html = await res.text()
-            const parsed = parseIASGHTML(html)
-            if (parsed.length > 0) {
-              setRankings(parsed)
-              return
-            }
+          const data = await fetchIASGRankings(month, year, credentials)
+          if (data.rankings && data.rankings.length > 0) {
+            setRankings(data.rankings)
+            return
           }
         } catch {
           continue
         }
       }
-      setError('Could not fetch IASG rankings. The rankings may require IASG credentials or a proxy. You can paste rankings data in Settings.')
+      setError('Could not fetch IASG rankings. Make sure your IASG credentials are saved in Settings and the backend is running.')
     } catch (err) {
       setError(err.message)
     } finally {
