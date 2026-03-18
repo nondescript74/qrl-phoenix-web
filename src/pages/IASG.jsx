@@ -9,35 +9,38 @@ export default function IASG() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [evalCount, setEvalCount] = useState(10)
+  const [dataPeriod, setDataPeriod] = useState(null)
 
   const loadRankings = useCallback(async () => {
     setLoading(true)
     setError(null)
+    setDataPeriod(null)
     try {
       const credentials = {
         email: localStorage.getItem('phoenix_iasg_email') || undefined,
         password: localStorage.getItem('phoenix_iasg_password') || undefined,
       }
 
-      // Try current and past months via backend proxy (avoids CORS)
+      // Request current month — backend will step backward automatically
+      // if data isn't available yet for the requested month
       const now = new Date()
-      for (let offset = 0; offset < 6; offset++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - offset, 1)
-        const month = d.toLocaleString('en-US', { month: 'long' }).toLowerCase()
-        const year = d.getFullYear()
-        try {
-          const data = await fetchIASGRankings(month, year, credentials)
-          if (data.rankings && data.rankings.length > 0) {
-            setRankings(data.rankings)
-            return
-          }
-        } catch {
-          continue
+      const month = now.toLocaleString('en-US', { month: 'long' }).toLowerCase()
+      const year = now.getFullYear()
+
+      const data = await fetchIASGRankings(month, year, credentials)
+      if (data.rankings && data.rankings.length > 0) {
+        setRankings(data.rankings)
+        // Show actual data period if it differs from requested
+        if (data.actual_month || data.actual_year) {
+          const actualMonth = (data.actual_month || month)
+          const actualYear = data.actual_year || year
+          setDataPeriod(`${actualMonth.charAt(0).toUpperCase() + actualMonth.slice(1)} ${actualYear}`)
         }
+      } else {
+        setError('No rankings data returned from IASG.')
       }
-      setError('Could not fetch IASG rankings. Make sure your IASG credentials are saved in Settings and the backend is running.')
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Could not fetch IASG rankings. Check that the backend is running.')
     } finally {
       setLoading(false)
     }
@@ -84,6 +87,20 @@ export default function IASG() {
 
       {loading && <Spinner text="Fetching IASG rankings..." />}
       {error && <div className="page-error">{error}</div>}
+
+      {dataPeriod && rankings.length > 0 && (
+        <div className="data-period-notice" style={{
+          padding: '10px 16px',
+          marginBottom: '16px',
+          background: 'rgba(179, 144, 92, 0.1)',
+          border: '1px solid rgba(179, 144, 92, 0.3)',
+          borderRadius: '8px',
+          fontSize: '14px',
+          color: '#B3905C',
+        }}>
+          📊 Showing rankings through <strong>{dataPeriod}</strong> (most recent available data)
+        </div>
+      )}
 
       {rankings.length > 0 && (
         <div className="iasg-table-wrap">
