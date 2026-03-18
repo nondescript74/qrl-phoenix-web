@@ -22,6 +22,34 @@ export default function Settings() {
   const [healthStatus, setHealthStatus] = useState(null)
   const fileRef = useRef(null)
 
+  // IASG Credentials (localStorage — not as secure as iOS Keychain, but functional)
+  const [iasgEmail, setIasgEmail] = useState(localStorage.getItem('phoenix_iasg_email') || '')
+  const [iasgPassword, setIasgPassword] = useState(localStorage.getItem('phoenix_iasg_password') || '')
+  const [iasgSaved, setIasgSaved] = useState(false)
+
+  function saveIasgCredentials() {
+    if (iasgEmail.trim()) {
+      localStorage.setItem('phoenix_iasg_email', iasgEmail.trim())
+    } else {
+      localStorage.removeItem('phoenix_iasg_email')
+    }
+    if (iasgPassword) {
+      localStorage.setItem('phoenix_iasg_password', iasgPassword)
+    } else {
+      localStorage.removeItem('phoenix_iasg_password')
+    }
+    setIasgSaved(true)
+    setTimeout(() => setIasgSaved(false), 2000)
+  }
+
+  function clearIasgCredentials() {
+    localStorage.removeItem('phoenix_iasg_email')
+    localStorage.removeItem('phoenix_iasg_password')
+    setIasgEmail('')
+    setIasgPassword('')
+    setIasgSaved(false)
+  }
+
   function handleProfileChange(key, value) {
     setProfile({ [key]: key === 'riskTolerance' || key === 'maxDrawdownTolerance' ? Number(value) : value })
   }
@@ -110,6 +138,41 @@ export default function Settings() {
           <button className="btn-primary" onClick={exportProfile}>Export Profile</button>
           <button className="btn-secondary" onClick={() => fileRef.current?.click()}>Import Profile</button>
           <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importProfile} />
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h2>IASG Credentials</h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #8899aa)', marginBottom: '1rem' }}>
+          Your IASG account credentials for accessing CTA rankings. Stored locally in your browser.
+        </p>
+        <div className="profile-form">
+          <div className="form-field">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={iasgEmail}
+              onChange={(e) => setIasgEmail(e.target.value)}
+              autoComplete="username"
+            />
+          </div>
+          <div className="form-field">
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={iasgPassword}
+              onChange={(e) => setIasgPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+        </div>
+        <div className="profile-actions">
+          <button className="btn-primary" onClick={saveIasgCredentials}>
+            {iasgSaved ? '✓ Saved' : 'Save Credentials'}
+          </button>
+          <button className="btn-secondary" onClick={clearIasgCredentials}>Clear</button>
         </div>
       </section>
 
