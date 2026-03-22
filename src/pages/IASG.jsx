@@ -71,7 +71,7 @@ export default function IASG() {
     <div className="page iasg-page">
       <div className="page-header">
         <h1>IASG CTA Rankings</h1>
-        <p className="page-subtitle">Monthly CTA Index rankings with AI-powered analysis and evaluation</p>
+        <p className="page-subtitle">Monthly CTA Index rankings with pipeline-based analysis and evaluation</p>
 
         {/* Month navigation */}
         <div style={{

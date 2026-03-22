@@ -35,7 +35,7 @@ export default function Discover() {
       <div className="page-header">
         <h1>Discover Strategies</h1>
         <p className="page-subtitle">
-          AI-powered web discovery finds strategies matched to your trader profile
+          Web discovery finds strategies matched to your trader profile
         </p>
         <button className="btn-primary" onClick={runDiscovery} disabled={loading}>
           {loading ? 'Searching the web...' : 'Discover Strategies'}

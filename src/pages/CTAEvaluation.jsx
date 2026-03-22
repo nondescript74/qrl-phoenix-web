@@ -9,7 +9,7 @@ function RegimePanel({ regime }) {
   if (!regime) return null
   return (
     <section className="eval-section regime-panel">
-      <h2>Market Regime</h2>
+      <h2>Current Regime</h2>
       <div className="regime-header">
         <TagPill label={regime.current} variant={regime.current === 'trending' ? 'green' : regime.current === 'volatile' ? 'risk' : 'default'} />
         <span className="regime-confidence">Confidence: {(regime.confidence * 100).toFixed(0)}%</span>
@@ -75,7 +75,7 @@ function CandidateCard({ candidate }) {
 
           {c.hypotheses?.length > 0 && (
             <div className="cc-hypotheses">
-              <strong>MHT Results:</strong>
+              <strong>State Resolution:</strong>
               {c.hypotheses.map((h, i) => (
                 <div key={i} className={`hypothesis ${h.result}`}>
                   <span className="h-result">{h.result}</span>
@@ -137,7 +137,7 @@ export default function CTAEvaluation() {
     )
   }
 
-  if (loading) return <Spinner text="Running CTA evaluation pipeline... Regime detection, MHT testing, portfolio construction. This may take 3-5 minutes." />
+  if (loading) return <Spinner text="Running state resolution pipeline... Regime detection, candidate state evaluation, constraint propagation. This may take 3-5 minutes." />
   if (error) return <div className="page"><div className="page-error">{error}</div><button className="btn-secondary" onClick={() => navigate('/iasg')}>Back</button></div>
   if (!result) return null
 
@@ -146,31 +146,31 @@ export default function CTAEvaluation() {
   return (
     <div className="page eval-page">
       <button className="btn-back" onClick={() => navigate('/iasg')}>← Back to Rankings</button>
-      <h1>CTA Evaluation Results</h1>
+      <h1>Candidate States — CTA Evaluation</h1>
 
       {/* Architecture Mapping Banner — Gap 2: Signal Strength */}
       <section className="eval-section" style={{
         background: 'linear-gradient(135deg, rgba(0,26,54,0.95), rgba(0,40,80,0.85))',
         border: '1px solid rgba(179,144,92,0.3)', borderRadius: '12px', padding: '20px', marginBottom: '20px'
       }}>
-        <h3 style={{ fontSize: '11px', letterSpacing: '1.5px', color: '#94a3b8', marginTop: 0, marginBottom: '14px' }}>ARCHITECTURE MAPPING</h3>
+        <h3 style={{ fontSize: '11px', letterSpacing: '1.5px', color: '#94a3b8', marginTop: 0, marginBottom: '14px' }}>STATE RESOLUTION PIPELINE</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', alignItems: 'center', gap: '8px' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '22px', marginBottom: '4px' }}>🔗</div>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#60a5fa' }}>FAISS</div>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Manager Similarity</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>State Retrieval</div>
           </div>
           <div style={{ color: '#B3905C', fontSize: '14px' }}>→</div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '22px', marginBottom: '4px' }}>🧪</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#a78bfa' }}>MHT</div>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Hypothesis Testing</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#a78bfa' }}>RESOLVE</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>State Resolution</div>
           </div>
           <div style={{ color: '#B3905C', fontSize: '14px' }}>→</div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '22px', marginBottom: '4px' }}>📊</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#22c55e' }}>OUTPUT</div>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Allocation Decision</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#22c55e' }}>EXECUTE</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Allocation Output</div>
           </div>
         </div>
       </section>
@@ -179,7 +179,7 @@ export default function CTAEvaluation() {
 
       {portfolio_summary && (
         <section className="eval-section portfolio-summary">
-          <h2>Portfolio Summary</h2>
+      <h2>Resolution Summary</h2>
           <div className="portfolio-stats">
             <div className="ps-stat"><span className="ps-num">{portfolio_summary.selected}</span><span className="ps-label">Selected</span></div>
             <div className="ps-stat"><span className="ps-num">{portfolio_summary.watchlist}</span><span className="ps-label">Watchlist</span></div>
@@ -191,7 +191,7 @@ export default function CTAEvaluation() {
 
       {similarity?.clusters?.length > 0 && (
         <section className="eval-section">
-          <h2>Strategy Clusters (FAISS)</h2>
+          <h2>State Clusters</h2>
           <div className="cluster-grid">
             {similarity.clusters.map((cl, i) => (
               <div key={i} className="cluster-card">
@@ -228,7 +228,7 @@ export default function CTAEvaluation() {
       )}
 
       <section className="eval-section">
-        <h2>Evaluated Candidates</h2>
+        <h2>Candidate States</h2>
         <div className="candidates-list">
           {candidates?.map((c, i) => <CandidateCard key={i} candidate={c} />)}
         </div>
@@ -248,8 +248,8 @@ export default function CTAEvaluation() {
               </div>
             ))}
             <div className="timing-total">Total: {(pipeline_timing.total_ms / 1000).toFixed(1)}s</div>
-            <div style={{ marginTop: '8px', fontSize: '12px', color: '#22c55e', fontWeight: 600 }}>
-              ⏱ What took weeks of manual analysis → {(pipeline_timing.total_ms / 1000).toFixed(1)}s automated
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
+              Pipeline total: {(pipeline_timing.total_ms / 1000).toFixed(1)}s — state maintained through all stages
             </div>
           </div>
         </section>
