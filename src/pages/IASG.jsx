@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { fetchIASGRankings } from '../api/phoenix'
 import Spinner from '../components/Spinner'
 
+const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december']
+
 export default function IASG() {
   const navigate = useNavigate()
   const [rankings, setRankings] = useState([])
@@ -10,6 +12,20 @@ export default function IASG() {
   const [error, setError] = useState(null)
   const [evalCount, setEvalCount] = useState(10)
   const [dataPeriod, setDataPeriod] = useState(null)
+
+  // Month navigation state
+  const now = new Date()
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()) // 0-indexed
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
+
+  function stepMonth(delta) {
+    let m = selectedMonth + delta
+    let y = selectedYear
+    if (m < 0) { m = 11; y-- }
+    if (m > 11) { m = 0; y++ }
+    setSelectedMonth(m)
+    setSelectedYear(y)
+  }
 
   const loadRankings = useCallback(async () => {
     setLoading(true)
@@ -21,16 +37,12 @@ export default function IASG() {
         password: localStorage.getItem('phoenix_iasg_password') || undefined,
       }
 
-      // Request current month — backend will step backward automatically
-      // if data isn't available yet for the requested month
-      const now = new Date()
-      const month = now.toLocaleString('en-US', { month: 'long' }).toLowerCase()
-      const year = now.getFullYear()
+      const month = MONTHS[selectedMonth]
+      const year = selectedYear
 
       const data = await fetchIASGRankings(month, year, credentials)
       if (data.rankings && data.rankings.length > 0) {
         setRankings(data.rankings)
-        // Show actual data period if it differs from requested
         if (data.actual_month || data.actual_year) {
           const actualMonth = (data.actual_month || month)
           const actualYear = data.actual_year || year
@@ -44,7 +56,7 @@ export default function IASG() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedMonth, selectedYear])
 
   function handleAnalyze(ranking) {
     navigate('/iasg/analysis', { state: { ranking } })
@@ -60,6 +72,24 @@ export default function IASG() {
       <div className="page-header">
         <h1>IASG CTA Rankings</h1>
         <p className="page-subtitle">Monthly CTA Index rankings with AI-powered analysis and evaluation</p>
+
+        {/* Month navigation */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '12px', margin: '12px 0',
+          background: 'rgba(0,26,54,0.4)', padding: '8px 16px', borderRadius: '8px', width: 'fit-content'
+        }}>
+          <button onClick={() => stepMonth(-1)} style={{
+            background: 'none', border: 'none', color: '#B3905C', fontSize: '18px', cursor: 'pointer', padding: '4px 8px'
+          }}>◀</button>
+          <span style={{ fontSize: '15px', fontWeight: 600, minWidth: '150px', textAlign: 'center' }}>
+            {MONTHS[selectedMonth].charAt(0).toUpperCase() + MONTHS[selectedMonth].slice(1)} {selectedYear}
+          </span>
+          <button onClick={() => stepMonth(1)} disabled={selectedMonth === now.getMonth() && selectedYear === now.getFullYear()} style={{
+            background: 'none', border: 'none', color: '#B3905C', fontSize: '18px', cursor: 'pointer', padding: '4px 8px',
+            opacity: (selectedMonth === now.getMonth() && selectedYear === now.getFullYear()) ? 0.3 : 1
+          }}>▶</button>
+        </div>
+
         <div className="header-actions">
           <button className="btn-primary" onClick={loadRankings} disabled={loading}>
             {loading ? 'Loading...' : 'Load Rankings'}

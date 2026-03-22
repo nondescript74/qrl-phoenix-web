@@ -148,6 +148,33 @@ export default function CTAEvaluation() {
       <button className="btn-back" onClick={() => navigate('/iasg')}>← Back to Rankings</button>
       <h1>CTA Evaluation Results</h1>
 
+      {/* Architecture Mapping Banner — Gap 2: Signal Strength */}
+      <section className="eval-section" style={{
+        background: 'linear-gradient(135deg, rgba(0,26,54,0.95), rgba(0,40,80,0.85))',
+        border: '1px solid rgba(179,144,92,0.3)', borderRadius: '12px', padding: '20px', marginBottom: '20px'
+      }}>
+        <h3 style={{ fontSize: '11px', letterSpacing: '1.5px', color: '#94a3b8', marginTop: 0, marginBottom: '14px' }}>ARCHITECTURE MAPPING</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', alignItems: 'center', gap: '8px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '22px', marginBottom: '4px' }}>🔗</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#60a5fa' }}>FAISS</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Manager Similarity</div>
+          </div>
+          <div style={{ color: '#B3905C', fontSize: '14px' }}>→</div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '22px', marginBottom: '4px' }}>🧪</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#a78bfa' }}>MHT</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Hypothesis Testing</div>
+          </div>
+          <div style={{ color: '#B3905C', fontSize: '14px' }}>→</div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '22px', marginBottom: '4px' }}>📊</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#22c55e' }}>OUTPUT</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>Allocation Decision</div>
+          </div>
+        </div>
+      </section>
+
       <RegimePanel regime={regime} />
 
       {portfolio_summary && (
@@ -164,7 +191,7 @@ export default function CTAEvaluation() {
 
       {similarity?.clusters?.length > 0 && (
         <section className="eval-section">
-          <h2>Strategy Clusters</h2>
+          <h2>Strategy Clusters (FAISS)</h2>
           <div className="cluster-grid">
             {similarity.clusters.map((cl, i) => (
               <div key={i} className="cluster-card">
@@ -174,6 +201,29 @@ export default function CTAEvaluation() {
               </div>
             ))}
           </div>
+
+          {similarity.similarity_pairs?.length > 0 && (
+            <div style={{ marginTop: '16px' }}>
+              <h3 style={{ fontSize: '12px', letterSpacing: '1px', color: '#f97316', marginBottom: '8px' }}>
+                ⚠ CONCENTRATION RISK PAIRS
+              </h3>
+              {similarity.similarity_pairs.map((pair, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px',
+                  padding: '8px 12px', borderRadius: '8px', background: 'rgba(249,115,22,0.06)',
+                  border: '1px solid rgba(249,115,22,0.15)'
+                }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600 }}>{pair.a_name || `CTA ${pair.a}`}</span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>↔</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600 }}>{pair.b_name || `CTA ${pair.b}`}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, color: pair.similarity > 0.8 ? '#ef4444' : '#f97316' }}>
+                    {(pair.similarity * 100).toFixed(0)}%
+                  </span>
+                  {pair.reason && <span style={{ fontSize: '10px', color: '#94a3b8' }}>{pair.reason}</span>}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -198,6 +248,9 @@ export default function CTAEvaluation() {
               </div>
             ))}
             <div className="timing-total">Total: {(pipeline_timing.total_ms / 1000).toFixed(1)}s</div>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#22c55e', fontWeight: 600 }}>
+              ⏱ What took weeks of manual analysis → {(pipeline_timing.total_ms / 1000).toFixed(1)}s automated
+            </div>
           </div>
         </section>
       )}
